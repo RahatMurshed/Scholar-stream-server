@@ -39,6 +39,10 @@ async function run() {
 
     const database = client.db("scholarStream");
     const usersCollection = database.collection("users");
+    const scholarshipsCollection = database.collection("scholarships");
+    const applicationsCollection = database.collection("applications");
+    const reviewsCollection = database.collection("reviews");
+
 
 
 
