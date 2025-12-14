@@ -9,7 +9,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET);
 
 const admin = require("firebase-admin");
 
-const serviceAccount = require("./scholar-stream-firebase-admin-sdk.json");
+const serviceAccount = require(process.env.SERVICE_ACCOUNT_PATH);
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
