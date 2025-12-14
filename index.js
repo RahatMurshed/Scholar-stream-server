@@ -70,7 +70,19 @@ async function run() {
     const applicationsCollection = database.collection("applications");
     const reviewsCollection = database.collection("reviews");
 
-    
+    // (Verify Admin before allowing admin activity)
+    const verifyAdmin = async (req, res, next) => {
+      // Decoded email from verifyFirebaseTOken.
+      const email = req.email;
+      const query = { email };
+      const user = await userCollection.findOne(query);
+
+      if (!user || user.role !== 'Admin') {
+        return res.status(403).send({ message: 'Forbidden Access' });
+      }
+
+      next();
+    }
 
 
     // Users Related API
