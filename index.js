@@ -9,7 +9,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET);
 
 const admin = require("firebase-admin");
 
-const serviceAccount = require(process.env.SERVICE_ACCOUNT_PATH);
+const serviceAccount = require('./scholar-stream-firebase-admin-sdk.json');
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
@@ -23,7 +23,7 @@ app.use(cors());
 const verifyFirebaseToken = async (req, res, next) => {
 
   const token = req.headers?.authorization;
-  console.log(token)
+  // console.log(token)
   if (!token) {
     return res.status(401).send({ message: 'Unauthorized Access' })
   }
@@ -96,7 +96,7 @@ async function run() {
     })
 
 
-    app.get('/users/:email/role', async (req, res) => {
+    app.get('/users/:email/role',verifyFirebaseToken, async (req, res) => {
       const email = req.params.email;
       const query = { email };
       const user = await userCollection.findOne(query);
@@ -164,6 +164,7 @@ async function run() {
 
       const paymentInfo = req.body;
       const amount = parseInt(paymentInfo.price) * 100;
+      console.log(amount);
       const session = await stripe.checkout.sessions.create({
         line_items: [
           {
@@ -171,7 +172,7 @@ async function run() {
               currency: 'USD',
               unit_amount: amount,
               product_data: {
-                name: `PLEASE PAY FOR : ${paymentInfo.parcelName}`,
+                name: `Please pay for : ${paymentInfo.scholarshipName}`,
 
               },
 
@@ -183,11 +184,11 @@ async function run() {
         mode: 'payment',
         metadata: {
           id: paymentInfo.id,
-          parcelName: paymentInfo.parcelName,
-          trackingId: paymentInfo.trackingId
+          scholarshipName: paymentInfo.scholarshipName,
+          
 
         },
-        customer_email: paymentInfo.senderEmail,
+        customer_email: paymentInfo.customerEmail,
         success_url: `${process.env.SITE_DOMAIN}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${process.env.SITE_DOMAIN}/payment-cancelled`,
       });
