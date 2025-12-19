@@ -104,6 +104,21 @@ async function run() {
     });
 
 
+    app.patch('/user/:id', async (req, res) => {
+      const newRole = req.body;
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const update = {
+        $set:{
+          role:newRole
+        }
+      }
+
+      const result = await usersCollection.updateOne(query, update);
+      res.send(result);
+    })
+
+
 
 
     // Scholarships Related API
@@ -161,6 +176,32 @@ async function run() {
     app.post('/scholarships', async (req, res) => {
       const newScholarship = req.body;
       const result = await scholarshipsCollection.insertOne(newScholarship);
+      res.send(result);
+    })
+
+    app.patch('/scholarship/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const updatedData = req.body;
+      const update = {
+        $set: {
+          scholarshipName: updatedData.scholarshipName,
+          universityName:updatedData.universityName,
+          subjectCategory: updatedData.subjectCategory,
+          scholarshipCategory: updatedData.scholarshipCategory,
+          scholarshipLevel: updatedData.scholarshipLevel,
+          applicationFees: updatedData.applicationFees,
+          applicationDeadline: updatedData.applicationDeadline,
+          tuitionFees: updatedData.tuitionFees,
+          serviceCharge: updatedData.serviceCharge,
+          scholarshipStatus: updatedData.scholarshipStatus,
+
+          
+
+
+        }
+      }
+      const result = await scholarshipsCollection.updateOne(query, update);
       res.send(result);
     })
 
