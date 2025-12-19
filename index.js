@@ -96,10 +96,10 @@ async function run() {
     })
 
 
-    app.get('/users/:email/role',verifyFirebaseToken, async (req, res) => {
+    app.get('/users/:email/role', verifyFirebaseToken, async (req, res) => {
       const email = req.params.email;
       const query = { email };
-      const user = await userCollection.findOne(query);
+      const user = await usersCollection.findOne(query);
       res.send({ role: user?.role || 'User' })
     });
 
@@ -158,8 +158,18 @@ async function run() {
       res.send(result);
     })
 
+    app.post('/scholarships', async (req, res) => {
+      const newScholarship = req.body;
+      const result = await scholarshipsCollection.insertOne(newScholarship);
+      res.send(result);
+    })
+
 
     // Payment Related Api
+
+
+
+
     app.post('/checkout', async (req, res) => {
 
       const paymentInfo = req.body;
@@ -185,7 +195,7 @@ async function run() {
         metadata: {
           id: paymentInfo.id,
           scholarshipName: paymentInfo.scholarshipName,
-          
+
 
         },
         customer_email: paymentInfo.customerEmail,
@@ -197,6 +207,50 @@ async function run() {
       res.send({ url: session.url })
     });
 
+
+    app.patch('/payment-success', async (req, res) => {
+      const sessionId = req.query.session_id;
+      const session = await stripe.checkout.sessions.retrieve(sessionId);
+      console.log('session retrieve', session)
+
+
+      const transectionId = session.payment_intent;
+
+
+
+
+      if (session.payment_status === 'paid') {
+        const id = session.metadata.id;
+        const query = { scholarshipId: id };
+        console.log("Session metadata id:", session.metadata.id);
+        console.log("Query:", query);
+        const update = {
+          $set: {
+            paymentStatus: 'Paid',
+            transectionId: transectionId
+          }
+        }
+
+        console.log('id:', id)
+        console.log('query:', query)
+        const doc = await applicationsCollection.findOne(query);
+        console.log("Matched document:", doc);
+
+
+        const result = await applicationsCollection.updateOne(query, update);
+        res.send(result);
+      }
+
+    })
+
+
+    // Applications related api
+
+    app.post('/application', async (req, res) => {
+      const applicationInfo = req.body;
+      const result = await applicationsCollection.insertOne(applicationInfo);
+      res.send(result);
+    })
 
 
     // Send a ping to confirm a successful connection
