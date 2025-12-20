@@ -223,9 +223,6 @@ async function run() {
           serviceCharge: updatedData.serviceCharge,
           scholarshipStatus: updatedData.scholarshipStatus,
 
-
-
-
         }
       }
       const result = await scholarshipsCollection.updateOne(query, update);
@@ -241,9 +238,6 @@ async function run() {
 
 
     // Payment Related Api
-
-
-
 
     app.post('/checkout', verifyFirebaseToken, async (req, res) => {
 
@@ -343,6 +337,47 @@ async function run() {
       const result = await cursor.toArray();
       res.send(result);
 
+    });
+
+    app.get('/application/university/stats', async (req, res) => {
+      const pipeline = [
+        {
+          $group: {
+            _id: '$universityName',
+            count: {$sum: 1},
+          }
+        }
+      ]
+      const result = await applicationsCollection.aggregate(pipeline).toArray();
+      res.send(result);
+    })
+    app.get('/application/scholarship/stats', async (req, res) => {
+      const pipeline = [
+        {
+          $group: {
+            _id: '$scholarshipName',
+            count: {$sum: 1},
+          }
+        }
+      ]
+      const result = await applicationsCollection.aggregate(pipeline).toArray();
+      res.send(result);
+    });
+
+    app.get('/total-application-fees', async (req, res) => {
+      const pipeline = [
+        {
+          $group:{
+            _id: null,
+            applicationFees: {$sum: {$toInt: '$applicationFees'}},
+            serviceCharge: {$sum: {$toInt: '$serviceCharge'}},
+           
+          }
+        }
+      ]
+
+      const result = await applicationsCollection.aggregate(pipeline).toArray();
+      res.send(result);
     })
 
     app.post('/application', verifyFirebaseToken, async (req, res) => {
@@ -416,6 +451,13 @@ async function run() {
 
 
     //  Review related api
+
+    app.get('/reviews', async (req, res) => {
+     const result = await reviewsCollection.find().sort({ reviewDate: -1 }).toArray();
+    res.send(result);
+    
+
+    })
 
     app.get('/reviews', async (req, res) => {
       const email = req.query.email;
