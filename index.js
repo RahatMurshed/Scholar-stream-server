@@ -263,10 +263,11 @@ async function run() {
         metadata: {
           id: paymentInfo.id,
           scholarshipName: paymentInfo.scholarshipName,
+          customer_email: paymentInfo.customerEmail,
 
 
         },
-        customer_email: paymentInfo.customerEmail,
+        
         success_url: `${process.env.SITE_DOMAIN}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${process.env.SITE_DOMAIN}/payment-cancelled`,
       });
@@ -289,7 +290,10 @@ async function run() {
 
       if (session.payment_status === 'paid') {
         const id = session.metadata.id;
-        const query = { scholarshipId: id };
+        const email = session.metadata.customer_email;
+        const query = { scholarshipId: id,
+          userEmail: email
+         };
 
         const update = {
           $set: {
@@ -335,7 +339,11 @@ async function run() {
 
     app.post('/application', verifyFirebaseToken, async (req, res) => {
       const applicationInfo = req.body;
-      const query = {scholarshipId:applicationInfo.scholarshipId}
+      const query = {
+        scholarshipId:applicationInfo.scholarshipId,
+        userEmail:applicationInfo.userEmail
+
+      }
       console.log('Quueeerryyyyy',query)
       const applicationExists = await applicationsCollection.findOne(query);
       console.log('exxxxiiiisssstt',applicationExists)
