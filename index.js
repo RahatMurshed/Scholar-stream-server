@@ -75,9 +75,22 @@ async function run() {
       // Decoded email from verifyFirebaseTOken.
       const email = req.email;
       const query = { email };
-      const user = await userCollection.findOne(query);
+      const user = await usersCollection.findOne(query);
 
       if (!user || user.role !== 'Admin') {
+        return res.status(403).send({ message: 'Forbidden Access' });
+      }
+
+      next();
+    }
+    // Verify Moderator
+    const verifyModerator = async (req, res, next) => {
+      // Decoded email from verifyFirebaseTOken.
+      const email = req.email;
+      const query = { email };
+      const user = await usersCollection.findOne(query);
+
+      if (!user || user.role !== 'Moderator') {
         return res.status(403).send({ message: 'Forbidden Access' });
       }
 
@@ -104,7 +117,7 @@ async function run() {
     });
 
 
-    app.patch('/user/:id', async (req, res) => {
+    app.patch('/user/:id', verifyFirebaseToken ,verifyAdmin, async (req, res) => {
       const newRole = req.body;
       const id = req.params.id;
       const query = {_id: new ObjectId(id)};
@@ -118,7 +131,7 @@ async function run() {
       res.send(result);
     });
 
-    app.delete('/user/:id', async (req, res)=>{
+    app.delete('/user/:id',verifyFirebaseToken, verifyAdmin, async (req, res)=>{
       const id = req.params.id;
       const query = {_id: new ObjectId(id)};
       const result = await usersCollection.deleteOne(query);
@@ -180,13 +193,13 @@ async function run() {
       res.send(result);
     })
 
-    app.post('/scholarships', async (req, res) => {
+    app.post('/scholarships',verifyFirebaseToken, verifyAdmin, async (req, res) => {
       const newScholarship = req.body;
       const result = await scholarshipsCollection.insertOne(newScholarship);
       res.send(result);
     })
 
-    app.patch('/scholarship/:id', async (req, res) => {
+    app.patch('/scholarship/:id',verifyFirebaseToken, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const query = {_id: new ObjectId(id)};
       const updatedData = req.body;
@@ -212,7 +225,7 @@ async function run() {
       res.send(result);
     })
 
-    app.delete('/scholarship/:id', async (req, res) => {
+    app.delete('/scholarship/:id',verifyFirebaseToken, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const query = {_id: new ObjectId(id)};
       const result = await scholarshipsCollection.deleteOne(query);
@@ -225,7 +238,7 @@ async function run() {
 
 
 
-    app.post('/checkout', async (req, res) => {
+    app.post('/checkout',verifyFirebaseToken, async (req, res) => {
 
       const paymentInfo = req.body;
       const amount = parseInt(paymentInfo.price) * 100;
@@ -263,7 +276,7 @@ async function run() {
     });
 
 
-    app.patch('/payment-success', async (req, res) => {
+    app.patch('/payment-success',verifyFirebaseToken, async (req, res) => {
       const sessionId = req.query.session_id;
       const session = await stripe.checkout.sessions.retrieve(sessionId);
       console.log('session retrieve', session)
@@ -302,14 +315,41 @@ async function run() {
     // Applications related api
 
 
-    app.get('/applications', async (req, res) => {
-      const result = await applicationsCollection.find().toArray();
+    app.get('/applications',verifyFirebaseToken, verifyModerator, async (req, res) => {
+      const result = await applicationsCollection.find().sort({applicationDate:-1}).toArray();
       res.send(result);
     })
 
-    app.post('/application', async (req, res) => {
+    app.post('/application',verifyFirebaseToken, async (req, res) => {
       const applicationInfo = req.body;
       const result = await applicationsCollection.insertOne(applicationInfo);
+      res.send(result);
+    });
+
+    app.patch('/application/:id/feedback',verifyFirebaseToken, verifyModerator, async (req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const updatedData = req.body;
+      const update = {
+        $set: {
+          feedback: updatedData.feedback
+        }
+      }
+      const result = await applicationsCollection.updateOne(query, update);
+      res.send(result);
+    });
+
+
+    app.patch('/application/:id/status', verifyFirebaseToken, verifyModerator, async (req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const updatedData = req.body;
+      const update = {
+        $set: {
+          applicationStatus: updatedData.applicationStatus
+        }
+      }
+      const result = await applicationsCollection.updateOne(query, update);
       res.send(result);
     })
 
