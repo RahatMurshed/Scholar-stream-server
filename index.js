@@ -117,13 +117,13 @@ async function run() {
     });
 
 
-    app.patch('/user/:id', verifyFirebaseToken ,verifyAdmin, async (req, res) => {
+    app.patch('/user/:id', verifyFirebaseToken, verifyAdmin, async (req, res) => {
       const newRole = req.body;
       const id = req.params.id;
-      const query = {_id: new ObjectId(id)};
+      const query = { _id: new ObjectId(id) };
       const update = {
-        $set:{
-          role:newRole.role
+        $set: {
+          role: newRole.role
         }
       }
 
@@ -131,9 +131,9 @@ async function run() {
       res.send(result);
     });
 
-    app.delete('/user/:id',verifyFirebaseToken, verifyAdmin, async (req, res)=>{
+    app.delete('/user/:id', verifyFirebaseToken, verifyAdmin, async (req, res) => {
       const id = req.params.id;
-      const query = {_id: new ObjectId(id)};
+      const query = { _id: new ObjectId(id) };
       const result = await usersCollection.deleteOne(query);
       res.send(result);
     });
@@ -193,20 +193,20 @@ async function run() {
       res.send(result);
     })
 
-    app.post('/scholarships',verifyFirebaseToken, verifyAdmin, async (req, res) => {
+    app.post('/scholarships', verifyFirebaseToken, verifyAdmin, async (req, res) => {
       const newScholarship = req.body;
       const result = await scholarshipsCollection.insertOne(newScholarship);
       res.send(result);
     })
 
-    app.patch('/scholarship/:id',verifyFirebaseToken, verifyAdmin, async (req, res) => {
+    app.patch('/scholarship/:id', verifyFirebaseToken, verifyAdmin, async (req, res) => {
       const id = req.params.id;
-      const query = {_id: new ObjectId(id)};
+      const query = { _id: new ObjectId(id) };
       const updatedData = req.body;
       const update = {
         $set: {
           scholarshipName: updatedData.scholarshipName,
-          universityName:updatedData.universityName,
+          universityName: updatedData.universityName,
           subjectCategory: updatedData.subjectCategory,
           scholarshipCategory: updatedData.scholarshipCategory,
           scholarshipLevel: updatedData.scholarshipLevel,
@@ -216,7 +216,7 @@ async function run() {
           serviceCharge: updatedData.serviceCharge,
           scholarshipStatus: updatedData.scholarshipStatus,
 
-          
+
 
 
         }
@@ -225,9 +225,9 @@ async function run() {
       res.send(result);
     })
 
-    app.delete('/scholarship/:id',verifyFirebaseToken, verifyAdmin, async (req, res) => {
+    app.delete('/scholarship/:id', verifyFirebaseToken, verifyAdmin, async (req, res) => {
       const id = req.params.id;
-      const query = {_id: new ObjectId(id)};
+      const query = { _id: new ObjectId(id) };
       const result = await scholarshipsCollection.deleteOne(query);
       res.send(result);
     })
@@ -238,7 +238,7 @@ async function run() {
 
 
 
-    app.post('/checkout',verifyFirebaseToken, async (req, res) => {
+    app.post('/checkout', verifyFirebaseToken, async (req, res) => {
 
       const paymentInfo = req.body;
       const amount = parseInt(paymentInfo.price) * 100;
@@ -276,7 +276,7 @@ async function run() {
     });
 
 
-    app.patch('/payment-success',verifyFirebaseToken, async (req, res) => {
+    app.patch('/payment-success', verifyFirebaseToken, async (req, res) => {
       const sessionId = req.query.session_id;
       const session = await stripe.checkout.sessions.retrieve(sessionId);
       console.log('session retrieve', session)
@@ -290,8 +290,7 @@ async function run() {
       if (session.payment_status === 'paid') {
         const id = session.metadata.id;
         const query = { scholarshipId: id };
-        console.log("Session metadata id:", session.metadata.id);
-        console.log("Query:", query);
+
         const update = {
           $set: {
             paymentStatus: 'Paid',
@@ -304,6 +303,8 @@ async function run() {
         const doc = await applicationsCollection.findOne(query);
         console.log("Matched document:", doc);
 
+     
+
 
         const result = await applicationsCollection.updateOne(query, update);
         res.send(result);
@@ -315,31 +316,39 @@ async function run() {
     // Applications related api
 
 
-    app.get('/applications',verifyFirebaseToken, verifyModerator, async (req, res) => {
-      const result = await applicationsCollection.find().sort({applicationDate:-1}).toArray();
+    app.get('/applications', verifyFirebaseToken, verifyModerator, async (req, res) => {
+      const result = await applicationsCollection.find().sort({ applicationDate: -1 }).toArray();
       res.send(result);
     });
 
-    app.get('/my-applications', verifyFirebaseToken, async (req, res) => {
-      const email = req.query.email;
+    app.get('/my-applications', async (req, res) => {
+      const { email } = req.query;
       const query = {};
-      if(req.query.email){
-        query.email = email;
+      if (email) {
+        query.userEmail = email;
       }
-      const result = await applicationsCollection.find(query).toArray();
+      const cursor = applicationsCollection.find(query).sort({ applicationDate: -1 })
+      const result = await cursor.toArray();
       res.send(result);
 
     })
 
-    app.post('/application',verifyFirebaseToken, async (req, res) => {
+    app.post('/application', verifyFirebaseToken, async (req, res) => {
       const applicationInfo = req.body;
+      const query = {scholarshipId:applicationInfo.scholarshipId}
+      console.log('Quueeerryyyyy',query)
+      const applicationExists = await applicationsCollection.findOne(query);
+      console.log('exxxxiiiisssstt',applicationExists)
+      if(applicationExists){
+        return res.send({message: 'Data already exists! Try another scholarship.'})
+      }
       const result = await applicationsCollection.insertOne(applicationInfo);
       res.send(result);
     });
 
-    app.patch('/application/:id/feedback',verifyFirebaseToken, verifyModerator, async (req, res) => {
+    app.patch('/application/:id/feedback', verifyFirebaseToken, verifyModerator, async (req, res) => {
       const id = req.params.id;
-      const query = {_id: new ObjectId(id)};
+      const query = { _id: new ObjectId(id) };
       const updatedData = req.body;
       const update = {
         $set: {
@@ -353,7 +362,7 @@ async function run() {
 
     app.patch('/application/:id/status', verifyFirebaseToken, verifyModerator, async (req, res) => {
       const id = req.params.id;
-      const query = {_id: new ObjectId(id)};
+      const query = { _id: new ObjectId(id) };
       const updatedData = req.body;
       const update = {
         $set: {
@@ -364,7 +373,7 @@ async function run() {
       res.send(result);
     });
 
-   
+
 
 
     // Send a ping to confirm a successful connection
