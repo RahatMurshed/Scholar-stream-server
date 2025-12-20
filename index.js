@@ -318,6 +318,17 @@ async function run() {
     app.get('/applications',verifyFirebaseToken, verifyModerator, async (req, res) => {
       const result = await applicationsCollection.find().sort({applicationDate:-1}).toArray();
       res.send(result);
+    });
+
+    app.get('/my-applications', verifyFirebaseToken, async (req, res) => {
+      const email = req.query.email;
+      const query = {};
+      if(req.query.email){
+        query.email = email;
+      }
+      const result = await applicationsCollection.find(query).toArray();
+      res.send(result);
+
     })
 
     app.post('/application',verifyFirebaseToken, async (req, res) => {
@@ -351,7 +362,9 @@ async function run() {
       }
       const result = await applicationsCollection.updateOne(query, update);
       res.send(result);
-    })
+    });
+
+   
 
 
     // Send a ping to confirm a successful connection
