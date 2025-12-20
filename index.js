@@ -274,7 +274,7 @@ async function run() {
 
 
         },
-        
+
         success_url: `${process.env.SITE_DOMAIN}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${process.env.SITE_DOMAIN}/payment-cancelled`,
       });
@@ -298,9 +298,10 @@ async function run() {
       if (session.payment_status === 'paid') {
         const id = session.metadata.id;
         const email = session.metadata.customer_email;
-        const query = { scholarshipId: id,
+        const query = {
+          scholarshipId: id,
           userEmail: email
-         };
+        };
 
         const update = {
           $set: {
@@ -314,7 +315,7 @@ async function run() {
         const doc = await applicationsCollection.findOne(query);
         console.log("Matched document:", doc);
 
-     
+
 
 
         const result = await applicationsCollection.updateOne(query, update);
@@ -347,15 +348,15 @@ async function run() {
     app.post('/application', verifyFirebaseToken, async (req, res) => {
       const applicationInfo = req.body;
       const query = {
-        scholarshipId:applicationInfo.scholarshipId,
-        userEmail:applicationInfo.userEmail
+        scholarshipId: applicationInfo.scholarshipId,
+        userEmail: applicationInfo.userEmail
 
       }
-      
+
       const applicationExists = await applicationsCollection.findOne(query);
-     
-      if(applicationExists){
-        return res.send({message: 'Data already exists! Try another scholarship.'})
+
+      if (applicationExists) {
+        return res.send({ message: 'Data already exists! Try another scholarship.' })
       }
       const result = await applicationsCollection.insertOne(applicationInfo);
       res.send(result);
@@ -364,7 +365,7 @@ async function run() {
 
     app.patch('/application/:id', async (req, res) => {
       const id = req.params.id;
-      const query = {_id: new ObjectId(id)}
+      const query = { _id: new ObjectId(id) }
       const updatedData = req.body;
       const update = {
         $set: {
@@ -392,7 +393,7 @@ async function run() {
     });
 
 
-     app.patch('/application/:id/status', verifyFirebaseToken, verifyModerator, async (req, res) => {
+    app.patch('/application/:id/status', verifyFirebaseToken, verifyModerator, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const updatedData = req.body;
@@ -408,13 +409,53 @@ async function run() {
 
     app.delete('/application/:id', async (req, res) => {
       const id = req.params.id;
-      const query = {_id: new ObjectId(id) };
+      const query = { _id: new ObjectId(id) };
       const result = await applicationsCollection.deleteOne(query);
       res.send(result);
     });
 
 
-   
+    //  Review related api
+
+    app.get('/reviews', async (req, res) => {
+      const email = req.query.email;
+      const query = {};
+      if (email) {
+        query.userEmail = email;
+      }
+      const result = await reviewsCollection.find(query).sort({ reviewDate: -1 }).toArray();
+      res.send(result);
+    })
+
+
+    app.post('/reviews', async (req, res) => {
+      const newReview = req.body;
+      const result = await reviewsCollection.insertOne(newReview);
+      res.send(result);
+    });
+
+
+    app.patch('/reviews/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const updatedData = req.body;
+      const update = {
+        $set: {
+          ratingPoint: updatedData.ratingPoint,
+          reviewComment: updatedData.reviewComment
+        }
+      }
+
+      const result = await reviewsCollection.updateOne(query, update);
+      res.send(result);
+    });
+
+    app.delete('/reviews/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await reviewsCollection.deleteOne(query);
+      res.send(result);
+    })
 
 
 
