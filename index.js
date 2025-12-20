@@ -9,7 +9,8 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET);
 
 const admin = require("firebase-admin");
 
-const serviceAccount = require('./scholar-stream-firebase-admin-sdk.json');
+const decoded = Buffer.from(process.env.FB_SERVICE_KEY, 'base64').toString('utf8')
+const serviceAccount = JSON.parse(decoded);
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
@@ -100,7 +101,7 @@ async function run() {
 
     // Users Related API
 
-    app.get('/users', verifyFirebaseToken, async (req, res) => {
+    app.get('/users', verifyFirebaseToken, verifyAdmin, async (req, res) => {
 
       const cursor = usersCollection.find();
       const users = await cursor.toArray();
@@ -327,7 +328,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get('/my-applications', async (req, res) => {
+    app.get('/my-applications',verifyFirebaseToken, async (req, res) => {
       const { email } = req.query;
       const query = {};
       if (email) {
@@ -339,7 +340,7 @@ async function run() {
 
     });
 
-    app.get('/application/university/stats', async (req, res) => {
+    app.get('/application/university/stats',verifyFirebaseToken, verifyAdmin, async (req, res) => {
       const pipeline = [
         {
           $group: {
@@ -351,7 +352,7 @@ async function run() {
       const result = await applicationsCollection.aggregate(pipeline).toArray();
       res.send(result);
     })
-    app.get('/application/scholarship/stats', async (req, res) => {
+    app.get('/application/scholarship/stats', verifyFirebaseToken, verifyAdmin, async (req, res) => {
       const pipeline = [
         {
           $group: {
@@ -364,7 +365,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get('/total-application-fees', async (req, res) => {
+    app.get('/total-application-fees', verifyFirebaseToken, verifyAdmin, async (req, res) => {
       const pipeline = [
         {
           $group:{
@@ -398,7 +399,7 @@ async function run() {
     });
 
 
-    app.patch('/application/:id', async (req, res) => {
+    app.patch('/application/:id',verifyFirebaseToken, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) }
       const updatedData = req.body;
@@ -442,7 +443,7 @@ async function run() {
     });
 
 
-    app.delete('/application/:id', async (req, res) => {
+    app.delete('/application/:id',verifyFirebaseToken, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await applicationsCollection.deleteOne(query);
@@ -452,14 +453,12 @@ async function run() {
 
     //  Review related api
 
-    app.get('/reviews', async (req, res) => {
+    app.get('/reviews',verifyFirebaseToken,verifyModerator, async (req, res) => {
      const result = await reviewsCollection.find().sort({ reviewDate: -1 }).toArray();
     res.send(result);
-    
-
     })
 
-    app.get('/reviews', async (req, res) => {
+    app.get('/reviews',verifyFirebaseToken, async (req, res) => {
       const email = req.query.email;
       const query = {};
       if (email) {
@@ -470,14 +469,14 @@ async function run() {
     })
 
 
-    app.post('/reviews', async (req, res) => {
+    app.post('/reviews',verifyFirebaseToken, async (req, res) => {
       const newReview = req.body;
       const result = await reviewsCollection.insertOne(newReview);
       res.send(result);
     });
 
 
-    app.patch('/reviews/:id', async (req, res) => {
+    app.patch('/reviews/:id', verifyFirebaseToken, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) }
       const updatedData = req.body;
@@ -492,7 +491,7 @@ async function run() {
       res.send(result);
     });
 
-    app.delete('/reviews/:id', async (req, res) => {
+    app.delete('/reviews/:id', verifyFirebaseToken, async (req, res) => {
       const id = req.params.id;
       const query = {_id: new ObjectId(id)}
       const result = await reviewsCollection.deleteOne(query);
@@ -503,8 +502,8 @@ async function run() {
 
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    // await client.db("admin").command({ ping: 1 });
+    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
   }
   finally {
     // Ensures that the client will close when you finish/error
