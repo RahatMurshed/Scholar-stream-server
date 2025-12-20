@@ -110,7 +110,7 @@ async function run() {
       const query = {_id: new ObjectId(id)};
       const update = {
         $set:{
-          role:newRole
+          role:newRole.role
         }
       }
 
@@ -300,6 +300,12 @@ async function run() {
 
 
     // Applications related api
+
+
+    app.get('/applications', async (req, res) => {
+      const result = await applicationsCollection.find().toArray();
+      res.send(result);
+    })
 
     app.post('/application', async (req, res) => {
       const applicationInfo = req.body;
