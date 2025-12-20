@@ -131,6 +131,13 @@ async function run() {
       res.send(result);
     });
 
+
+    app.post('/users', async (req, res) => {
+      const userInfo = req.body;
+      const result = await usersCollection.insertOne(userInfo);
+      res.send(result);
+    });
+
     app.delete('/user/:id', verifyFirebaseToken, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -344,15 +351,32 @@ async function run() {
         userEmail:applicationInfo.userEmail
 
       }
-      console.log('Quueeerryyyyy',query)
+      
       const applicationExists = await applicationsCollection.findOne(query);
-      console.log('exxxxiiiisssstt',applicationExists)
+     
       if(applicationExists){
         return res.send({message: 'Data already exists! Try another scholarship.'})
       }
       const result = await applicationsCollection.insertOne(applicationInfo);
       res.send(result);
     });
+
+
+    app.patch('/application/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const updatedData = req.body;
+      const update = {
+        $set: {
+          userName: updatedData.userName,
+          userEmail: updatedData.userEmail,
+          contact: updatedData.contact
+        }
+      }
+      const result = await applicationsCollection.updateOne(query, update);
+      res.send(result);
+    })
+
 
     app.patch('/application/:id/feedback', verifyFirebaseToken, verifyModerator, async (req, res) => {
       const id = req.params.id;
@@ -368,7 +392,7 @@ async function run() {
     });
 
 
-    app.patch('/application/:id/status', verifyFirebaseToken, verifyModerator, async (req, res) => {
+     app.patch('/application/:id/status', verifyFirebaseToken, verifyModerator, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const updatedData = req.body;
@@ -380,6 +404,17 @@ async function run() {
       const result = await applicationsCollection.updateOne(query, update);
       res.send(result);
     });
+
+
+    app.delete('/application/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id) };
+      const result = await applicationsCollection.deleteOne(query);
+      res.send(result);
+    });
+
+
+   
 
 
 
