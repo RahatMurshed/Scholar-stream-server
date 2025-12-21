@@ -458,7 +458,18 @@ async function run() {
     res.send(result);
     })
 
-    app.get('/reviews',verifyFirebaseToken, async (req, res) => {
+    app.get('/scholarship-details/reviews', async (req, res) => {
+      const id = req.query.id;
+      const query = {}
+      if(id){
+        query.scholarshipId = id;
+      }
+      const result = await reviewsCollection.find(query).toArray();
+      res.send(result);
+
+    });
+
+    app.get('/my-reviews',verifyFirebaseToken, async (req, res) => {
       const email = req.query.email;
       const query = {};
       if (email) {
