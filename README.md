@@ -26,6 +26,6 @@ It provides secure APIs for students, moderators, and admins, including:
 - **Database**: MongoDB Atlas  
 - **Auth**: Firebase Admin SDK  
 - **Payments**: Stripe API  
-- **Deployment**: Render / Railway  
+- **Deployment**: Vercel 
 
 ---
