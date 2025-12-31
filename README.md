@@ -16,8 +16,6 @@ It provides secure APIs for students, moderators, and admins, including:
 - **Payments** → Stripe integration for scholarship application fees.  
 - **Error Handling** → returns proper HTTP codes (403 Forbidden, 404 Not Found, etc.).  
 
-This backend is designed to be **persistent and reliable** when deployed on services like **Render** or **Railway**.  
-⚠️ Note: Vercel is not suitable for long‑running Express servers — use Render/Railway for stable deployment.
 
 ---
 
